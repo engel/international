@@ -11,7 +11,7 @@ class FileManager
       puts "Something is wrong with one of your language columns (maybe it's missing?)\n".red
       exit 1
     end
-
+    @base_lang = 'en'
     @language = language.downcase
     @platform = platform
     @dryrun = dryrun
@@ -26,9 +26,19 @@ class FileManager
 
   def get_file_name
     if @platform.eql?'android'
-      "values-#{@language}/translation.xml"
+      if @language.equal?(@base_lang)
+        "values/strings.xml"
+      else
+        "values-#{@language}/strings.xml"
+      end
+
     else
-      "#{@language}.lbproj/Localizable.strings"
+      if @language.equal?(@base_lang)
+        "Base.lproj/Localizable.strings"
+      else
+        "#{@language}.lproj/Localizable.strings"
+      end
+
     end
   end
 
@@ -44,7 +54,7 @@ class FileManager
       unless File.directory?(dirname)
         FileUtils.mkdir_p(dirname)
       end
-      File.open(destination_file_path, 'w') { |f| f.write(render) }
+      File.open(destination_file_path, 'wb') { |f| f.write(render) }
     else
       puts render.yellow
     end

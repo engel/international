@@ -34,5 +34,6 @@ Gem::Specification.new do |spec|
 
   spec.add_dependency 'erubis', '~> 2.7'
   spec.add_dependency 'fastercsv', '~> 1.5', '>= 1.5.5'
+  spec.add_dependency 'htmlentities', '~> 4.3.3', '>= 4.3.3'
 
 end

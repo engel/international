@@ -1,8 +1,10 @@
+#encoding utf-8
 require 'colorize'
 require 'international/version'
 require 'csv'
 require 'file_manager'
-
+require 'htmlentities'
+Encoding.default_external = Encoding::UTF_8
 module International
 
   class MainApp
@@ -14,6 +16,7 @@ module International
       @path_to_csv = nil
       @dryrun = false
       @platform = 'android'
+      @default_lang = 'en'
 
       # Parse Options
       arguments.push "-h" if arguments.length == 0
@@ -89,8 +92,9 @@ module International
 
     ### CSV TO HASH
     def csv_to_hash(path_to_csv)
+      p Encoding.find("filesystem")
       file = File.open(path_to_csv, "rb")
-      body = file.read
+      body = file.read().force_encoding("UTF-8")
 
       body = "key#{body}" if body[0,1] == ','
 
@@ -106,21 +110,61 @@ module International
     def separate_languages(all)
       languages = all.first.keys.drop(1)
       separated = Hash.new
+      coder = HTMLEntities.new
+      default_items = Array.new
 
-      languages.each do |lang|
+      languages.each  do | lang|
         items = Array.new
-        all.each do |row|
+        all.each_with_index do | row, idx|
 
           next if row.first.nil?
+          begin
+            encoded = row[lang].gsub("'",'\\\\\'')
+            encoded = encoded.gsub('"','\\"')
+            encoded = encoded.gsub('&','&amp;')
+            #encoded = coder.encode(encoded)
+            #encoded = row[lang].encode('utf-8')
+            if encoded != row[lang]
+            #puts "ENC 0 #{lang} '#{row[lang]}'"
+            #puts "ENC 1 #{lang} '#{encoded}'"
+            end
 
-          item = {
+          rescue => e
+            #puts(item[:key])
+            #p "!!!!  ERRR #{e}"
+            #puts " #{lang} #{row[lang]}"
+
+          end
+           item = {
             :key => row.first.last, # dem hacks
-            :translation => row[lang]
+            :translation => row[lang],
+
+            :translation_encoded => encoded || row[lang]
           }
-
+          unless lang.eql?@default_lang
+            if item[:translation].nil?
+              puts lang
+              puts idx
+              puts default_items[idx][:translation]
+              item[:translation] = default_items[idx][:translation]
+              item[:translation_encoded] = default_items[idx][:translation_encoded]
+            end
+            if item[:translation_encoded].nil?
+              puts lang
+              puts idx
+              puts default_items[idx][:translation_encoded]
+              item[:translation_encoded] = default_items[idx][:translation_encoded]
+            end
+          end
           items.push item
-        end
 
+          if lang.to_s.eql?@default_lang
+            #puts lang
+            #puts default_items.count
+
+            default_items.push item
+          end
+        end
         manager = FileManager.new lang, items, @path_to_output, @platform, @dryrun
         manager.create_file
       end
