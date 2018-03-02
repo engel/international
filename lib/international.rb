@@ -94,7 +94,7 @@ module International
     def csv_to_hash(path_to_csv)
       if path_to_csv.start_with?('http://') || path_to_csv.start_with?('https://')
         require 'open-uri'
-        response = open(url)
+        response = open(path_to_csv)
         file = Tempfile.new('international.csv')
         IO.copy_stream(response, file)
         body = file.read().force_encoding("UTF-8")
