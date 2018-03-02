@@ -26,7 +26,7 @@ class FileManager
 
   def get_file_name
     if @platform.eql?'android'
-      if @language.equal?(@base_lang)
+      if @language.to_s.eql?(@base_lang)
         "values/strings.xml"
       else
         "values-#{@language}/strings.xml"

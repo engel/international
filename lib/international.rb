@@ -92,10 +92,20 @@ module International
 
     ### CSV TO HASH
     def csv_to_hash(path_to_csv)
-      p Encoding.find("filesystem")
-      file = File.open(path_to_csv, "rb")
-      body = file.read().force_encoding("UTF-8")
-
+      if path_to_csv.start_with?('http://') || path_to_csv.start_with?('https://')
+        require 'open-uri'
+        response = open(url)
+        file = Tempfile.new('international.csv')
+        IO.copy_stream(response, file)
+        body = file.read().force_encoding("UTF-8")
+        #CSV.new(body).each do |l|
+        #  puts l
+        #end
+      else
+        p Encoding.find("filesystem")
+        file = File.open(path_to_csv, "rb")
+        body = file.read().force_encoding("UTF-8")
+      end
       body = "key#{body}" if body[0,1] == ','
 
       CSV::Converters[:blank_to_nil] = lambda do |field|
@@ -109,7 +119,7 @@ module International
 
     def separate_languages(all)
       languages = all.first.keys.drop(1)
-      separated = Hash.new
+        separated = Hash.new
       coder = HTMLEntities.new
       default_items = Array.new
 
@@ -122,7 +132,8 @@ module International
             encoded = row[lang].gsub("'",'\\\\\'')
             encoded = encoded.gsub('"','\\"')
             encoded = encoded.gsub('&','&amp;')
-            #encoded = coder.encode(encoded)
+
+             #encoded = coder.encode(encoded)
             #encoded = row[lang].encode('utf-8')
             if encoded != row[lang]
             #puts "ENC 0 #{lang} '#{row[lang]}'"
@@ -133,30 +144,43 @@ module International
             #puts(item[:key])
             #p "!!!!  ERRR #{e}"
             #puts " #{lang} #{row[lang]}"
+          end
+          # replcing substitutionds for ios
+          replaced = row[lang]
+          if @platform.eql?'ios'
+            if /\%/.match(replaced)
+              replaced = replaced.gsub(/\%[1-9]\$s/,'%@')
+              replaced = replaced.gsub(/\%[1-9]\$d/,'%@')
+              replaced = replaced.gsub("%s","%@")
+            end
+
 
           end
            item = {
             :key => row.first.last, # dem hacks
-            :translation => row[lang],
+            :translation => replaced,
 
             :translation_encoded => encoded || row[lang]
           }
-          unless lang.eql?@default_lang
+          unless lang.to_s.eql?@default_lang
             if item[:translation].nil?
               puts lang
               puts idx
-              puts default_items[idx][:translation]
+              #puts default_items[idx][:translation]
               item[:translation] = default_items[idx][:translation]
               item[:translation_encoded] = default_items[idx][:translation_encoded]
             end
             if item[:translation_encoded].nil?
               puts lang
               puts idx
-              puts default_items[idx][:translation_encoded]
+              #puts default_items[idx][:translation_encoded]
               item[:translation_encoded] = default_items[idx][:translation_encoded]
             end
           end
-          items.push item
+          unless item[:key].to_s.empty?
+            items.push item
+          end
+
 
           if lang.to_s.eql?@default_lang
             #puts lang
