@@ -32,8 +32,8 @@ module International
 
     ### Options parser
     def create_options_parser(args)
-
-      args.options do |opts|
+      require 'optparse'
+      OptionParser.new  do |opts|
         opts.banner = "Usage: international [OPTIONS]"
         opts.separator  ''
         opts.separator  "Options"
@@ -68,9 +68,7 @@ module International
           puts International::VERSION
           exit
         end
-        opts.parse!
-
-      end
+      end.parse!(args)
     end
 
     ### Manage options
@@ -95,9 +93,9 @@ module International
       if path_to_csv.start_with?('http://') || path_to_csv.start_with?('https://')
         require 'open-uri'
         response = open(path_to_csv)
-        file = Tempfile.new('international.csv')
-        IO.copy_stream(response, file)
-        body = file.read().force_encoding("UTF-8")
+        data = response.read
+
+        body = data.force_encoding("UTF-8")
         #CSV.new(body).each do |l|
         #  puts l
         #end
@@ -164,16 +162,10 @@ module International
           }
           unless lang.to_s.eql?@default_lang
             if item[:translation].nil?
-              puts lang
-              puts idx
-              #puts default_items[idx][:translation]
               item[:translation] = default_items[idx][:translation]
               item[:translation_encoded] = default_items[idx][:translation_encoded]
             end
             if item[:translation_encoded].nil?
-              puts lang
-              puts idx
-              #puts default_items[idx][:translation_encoded]
               item[:translation_encoded] = default_items[idx][:translation_encoded]
             end
           end
