@@ -130,8 +130,7 @@ module International
             encoded = row[lang].gsub("'",'\\\\\'')
             encoded = encoded.gsub('"','\\"')
             encoded = encoded.gsub('&','&amp;')
-
-             #encoded = coder.encode(encoded)
+            #encoded = coder.encode(encoded)
             #encoded = row[lang].encode('utf-8')
             if encoded != row[lang]
             #puts "ENC 0 #{lang} '#{row[lang]}'"
@@ -139,19 +138,20 @@ module International
             end
 
           rescue => e
-            #puts(item[:key])
-            #p "!!!!  ERRR #{e}"
-            #puts " #{lang} #{row[lang]}"
-          end
+             end
           # replcing substitutionds for ios
           replaced = row[lang]
           if @platform.eql?'ios'
-            if /\%/.match(replaced)
-              replaced = replaced.gsub(/\%[1-9]\$s/,'%@')
-              replaced = replaced.gsub(/\%[1-9]\$d/,'%@')
-              replaced = replaced.gsub("%s","%@")
-            end
+            begin
+              if /\%/.match(replaced)
+                replaced = replaced.gsub(/\%[1-9]\$s/,'%@')
+                replaced = replaced.gsub(/\%[1-9]\$d/,'%@')
+                replaced = replaced.gsub("%s","%@")
+              end
+              replaced = replaced.gsub(/\n/,"\\n")
+            rescue => e
 
+            end
 
           end
            item = {
